@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>縁側 ENGAWA — App Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;600;700&family=Shippori+Mincho+B1:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ─────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --moss:#1e4a3a; --moss2:#2d6654; --moss3:#3d7a66;
+  --gold:#a07830; --gold2:#c89e58; --gold3:#e8c980;
+  --paper:#f7f2e9; --cream:#efe8d8; --sand:#d4c5a9;
+  --ink:#1a1612; --mid:#6b6258; --mist:#9a8f84;
+  --white:#ffffff; --light:#faf7f2;
+  --rule:rgba(26,22,18,.1);
+  --safe-top:env(safe-area-inset-top,0px);
+}
+html,body{width:100%;height:100%;background:#2a2a2a;font-family:'Noto Serif JP',serif;overflow:hidden;}
+
+/* ── OUTER WRAPPER (demo stage) ─── */
+.stage{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:100vh; background:#1c1c1e;
+  gap:32px; flex-wrap:wrap; padding:20px;
+}
+.stage-label{
+  position:fixed; top:16px; left:50%; transform:translateX(-50%);
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:rgba(255,255,255,.35);
+  white-space:nowrap; pointer-events:none; z-index:999;
+}
+
+/* ── PHONE FRAME ─────────────────── */
+.phone{
+  width:390px; height:844px;
+  background:var(--paper);
+  border-radius:52px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 32px 80px rgba(0,0,0,.7), inset 0 0 0 1.5px rgba(255,255,255,.08);
+  flex-shrink:0;
+}
+/* Notch */
+.phone::before{
+  content:'';
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:120px; height:34px;
+  background:var(--ink);
+  border-radius:0 0 20px 20px;
+  z-index:200;
+}
+
+/* ── SCREENS ─────────────────────── */
+.screen{
+  position:absolute; inset:0;
+  display:none; flex-direction:column;
+  background:var(--paper);
+  overflow:hidden;
+}
+.screen.active{display:flex;}
+
+/* ── STATUS BAR ─────────────────── */
+.status-bar{
+  height:50px; padding:14px 28px 0;
+  display:flex; justify-content:space-between; align-items:center;
+  flex-shrink:0; position:relative; z-index:10;
+}
+.status-time{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--ink);}
+.status-icons{display:flex;gap:6px;align-items:center;}
+.status-icons svg{width:16px;height:16px;}
+
+/* ── NAV BAR ─────────────────────── */
+.nav-bar{
+  height:82px; background:var(--white);
+  border-top:1px solid var(--rule);
+  display:flex; align-items:flex-start; justify-content:space-around;
+  padding-top:10px; flex-shrink:0;
+}
+.nav-item{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  cursor:pointer; padding:4px 16px; border-radius:12px;
+  transition:background .2s;
+}
+.nav-item:hover{background:rgba(30,74,58,.06);}
+.nav-item svg{width:24px;height:24px;stroke:var(--mist);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.nav-item.active svg{stroke:var(--moss);}
+.nav-item span{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--mist);}
+.nav-item.active span{color:var(--moss);}
+
+/* ── SCROLL CONTENT ─────────────── */
+.scroll-content{flex:1;overflow-y:auto;overflow-x:hidden;}
+.scroll-content::-webkit-scrollbar{display:none;}
+
+/* ════════════════════════════════════
+   SCREEN 1 — SPLASH / LOGIN
+════════════════════════════════════ */
+#screen-splash{background:var(--moss);justify-content:center;align-items:center;}
+#screen-splash::after{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='800'%3E%3Cline x1='60' y1='0' x2='60' y2='800' stroke='rgba(255,255,255,.04)' stroke-width='1'/%3E%3Cline x1='160' y1='0' x2='160' y2='800' stroke='rgba(255,255,255,.03)' stroke-width='1'/%3E%3Cline x1='260' y1='0' x2='260' y2='800' stroke='rgba(255,255,255,.025)' stroke-width='1'/%3E%3Cline x1='340' y1='0' x2='340' y2='800' stroke='rgba(255,255,255,.02)' stroke-width='1'/%3E%3Cline x1='0' y1='120' x2='400' y2='120' stroke='rgba(255,255,255,.03)' stroke-width='0.5'/%3E%3Cline x1='0' y1='280' x2='400' y2='280' stroke='rgba(255,255,255,.02)' stroke-width='0.5'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.splash-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 40px;width:100%;}
+.splash-badge{
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.3em; text-transform:uppercase;
+  color:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.2);
+  padding:5px 16px; margin-bottom:28px;
+}
+.splash-title{
+  font-family:'Shippori Mincho B1',serif; font-size:72px; font-weight:800;
+  color:white; letter-spacing:.1em; line-height:1; margin-bottom:8px;
+}
+.splash-roman{
+  font-family:'DM Mono',monospace; font-size:12px; letter-spacing:.4em;
+  color:rgba(255,255,255,.5); text-transform:uppercase; margin-bottom:36px;
+}
+.splash-tagline{
+  font-size:15px; font-weight:300; line-height:1.9; letter-spacing:.06em;
+  color:rgba(255,255,255,.75); text-align:center; margin-bottom:56px;
+}
+.splash-tagline em{font-style:normal;color:var(--gold3);}
+.btn-splash{
+  width:100%; padding:18px; background:white; color:var(--moss);
+  font-family:'Noto Serif JP',serif; font-size:16px; font-weight:600;
+  letter-spacing:.06em; border:none; border-radius:4px; cursor:pointer;
+  margin-bottom:14px; transition:all .2s;
+}
+.btn-splash:hover{background:var(--cream);}
+.btn-splash-outline{
+  width:100%; padding:18px; background:transparent; color:rgba(255,255,255,.8);
+  font-family:'Noto Serif JP',serif; font-size:15px; font-weight:300;
+  letter-spacing:.06em; border:1px solid rgba(255,255,255,.25); border-radius:4px;
+  cursor:pointer; transition:all .2s;
+}
+.btn-splash-outline:hover{background:rgba(255,255,255,.07);}
+.splash-note{
+  margin-top:24px; font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:.1em; color:rgba(255,255,255,.3); text-align:center;
+}
+.splash-verified{
+  display:flex; align-items:center; gap:8px; margin-bottom:40px;
+  padding:10px 16px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+}
+.splash-verified svg{width:16px;height:16px;stroke:var(--gold3);fill:none;stroke-width:1.5;flex-shrink:0;}
+.splash-verified span{font-size:11px;color:rgba(255,255,255,.7);letter-spacing:.04em;}
+
+/* ════════════════════════════════════
+   SCREEN 2 — HOME (発見)
+════════════════════════════════════ */
+.home-header{
+  padding:0 24px 16px; background:var(--paper);
+  border-bottom:1px solid var(--rule);
+}
+.home-header-top{
+  display:flex; justify-content:space-between; align-items:center; padding-top:4px;
+}
+.home-title{font-family:'Shippori Mincho B1',serif;font-size:26px;font-weight:700;color:var(--moss);letter-spacing:.06em;}
+.home-bell{width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
+.home-bell svg{width:22px;height:22px;stroke:var(--mid);fill:none;stroke-width:1.5;}
+.home-bell-dot{position:absolute;top:8px;right:8px;width:8px;height:8px;background:var(--gold);border-radius:50%;border:2px solid var(--paper);}
+.filter-row{display:flex;gap:8px;margin-top:12px;overflow-x:auto;padding-bottom:4px;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-chip{
+  flex-shrink:0; padding:6px 14px;
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  border:1px solid var(--sand); border-radius:100px; cursor:pointer;
+  white-space:nowrap; color:var(--mid); transition:all .2s;
+}
+.filter-chip.active{background:var(--moss);border-color:var(--moss);color:white;}
+.filter-chip:not(.active):hover{border-color:var(--moss);color:var(--moss);}
+
+.member-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;}
+.member-card{
+  background:white; border-radius:12px; overflow:hidden;
+  border:1px solid var(--rule); cursor:pointer;
+  transition:transform .2s, box-shadow .2s;
+  position:relative;
+}
+.member-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.1);}
+.member-card:active{transform:translateY(0);box-shadow:none;}
+.card-photo{
+  width:100%; aspect-ratio:3/4; display:flex; align-items:center;
+  justify-content:center; position:relative; overflow:hidden;
+}
+.card-avatar{
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  font-size:52px; position:relative;
+}
+.card-verified{
+  position:absolute; top:8px; right:8px;
+  background:var(--moss); color:white; border-radius:100px;
+  font-family:'DM Mono',monospace; font-size:8px; letter-spacing:.1em;
+  padding:3px 8px; display:flex; align-items:center; gap:4px;
+}
+.card-verified svg{width:9px;height:9px;stroke:white;fill:none;stroke-width:2;}
+.card-body{padding:10px 12px 14px;}
+.card-name{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:2px;letter-spacing:.02em;}
+.card-age{font-family:'DM Mono',monospace;font-size:11px;color:var(--mist);}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;}
+.card-tag{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 7px;background:var(--cream);color:var(--mid);border-radius:3px;
+}
+
+/* ════════════════════════════════════
+   SCREEN 3 — PROFILE DETAIL
+════════════════════════════════════ */
+.profile-header{
+  position:relative; height:380px; overflow:hidden; flex-shrink:0;
+}
+.profile-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:110px;}
+.profile-header-overlay{
+  position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(30,74,58,0) 40%, rgba(30,74,58,.85) 100%);
+}
+.profile-back{
+  position:absolute; top:52px; left:16px;
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:10;
+}
+.profile-back svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;}
+.profile-header-info{
+  position:absolute; bottom:20px; left:24px; right:24px; z-index:5;
+}
+.profile-name-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+.profile-name{font-family:'Shippori Mincho B1',serif;font-size:28px;font-weight:700;color:white;letter-spacing:.04em;}
+.profile-age{font-family:'DM Mono',monospace;font-size:14px;color:rgba(255,255,255,.7);}
+.profile-verified-badge{
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(160,120,48,.9); padding:4px 10px; border-radius:100px;
+}
+.profile-verified-badge svg{width:12px;height:12px;stroke:white;fill:none;stroke-width:2;}
+.profile-verified-badge span{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:white;text-transform:uppercase;}
+
+.profile-body{padding:24px;}
+.profile-section{margin-bottom:28px;}
+.profile-section-label{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold);display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.profile-section-label::before{content:'';display:block;width:20px;height:1px;background:var(--gold);}
+.profile-section-text{font-size:15px;line-height:2;color:var(--ink);letter-spacing:.04em;}
+.profile-tags-list{display:flex;gap:8px;flex-wrap:wrap;}
+.profile-tag{
+  padding:7px 14px;border:1px solid var(--sand);
+  font-size:13px;color:var(--mid);border-radius:100px;letter-spacing:.04em;
+}
+.profile-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.profile-info-item{
+  background:var(--cream); padding:12px 14px; border-radius:8px;
+}
+.profile-info-item-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--mist);margin-bottom:4px;}
+.profile-info-item-val{font-size:14px;font-weight:600;color:var(--ink);}
+
+.profile-action-row{
+  display:flex; gap:12px; padding:16px 24px 0;
+  border-top:1px solid var(--rule); flex-shrink:0;
+}
+.btn-pass{
+  flex:1; padding:16px; background:transparent; color:var(--mid);
+  font-family:'Noto Serif JP',serif; font-size:14px; letter-spacing:.04em;
+  border:1px solid var(--sand); border-radius:4px; cursor:pointer; transition:all .2s;
+}
+.btn-pass:hover{border-color:var(--mid);}
+.btn-connect{
+  flex:2; padding:16px; background:var(--moss); color:white;
+  font-family:'Noto Serif JP',serif; font-size:15px; font-weight:600; letter-spacing:.06em;
+  border:none; border-radius:4px; cursor:pointer; transition:all .2s;
+}
+.btn-connect:hover{background:var(--moss2);}
+
+/* ════════════════════════════════════
+   SCREEN 4 — MESSAGES
+════════════════════════════════════ */
+.msg-header{
+  padding:0 24px 16px; background:var(--paper);
+  border-bottom:1px solid var(--rule);
+}
+.msg-header-top{display:flex;justify-content:space-between;align-items:center;padding-top:4px;}
+.msg-title{font-family:'Shippori Mincho B1',serif;font-size:26px;font-weight:700;color:var(--moss);letter-spacing:.06em;}
+.msg-edit{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--moss);cursor:pointer;text-transform:uppercase;}
+
+.thread-list{padding:0;}
+.thread-item{
+  display:flex; align-items:center; gap:14px; padding:14px 24px;
+  border-bottom:1px solid var(--rule); cursor:pointer; transition:background .15s;
+}
+.thread-item:hover,.thread-item:active{background:var(--cream);}
+.thread-avatar{
+  width:52px; height:52px; border-radius:50%; font-size:26px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; background:var(--cream); border:2px solid var(--sand);
+}
+.thread-avatar.unread{border-color:var(--moss);}
+.thread-info{flex:1; min-width:0;}
+.thread-name-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.thread-name{font-size:15px;font-weight:600;color:var(--ink);}
+.thread-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--mist);}
+.thread-preview{font-size:13px;color:var(--mist);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em;}
+.thread-unread-dot{width:9px;height:9px;background:var(--moss);border-radius:50%;flex-shrink:0;}
+
+/* ════════════════════════════════════
+   SCREEN 5 — CHAT
+════════════════════════════════════ */
+.chat-header{
+  display:flex;align-items:center;gap:12px;
+  padding:8px 16px 12px; background:white;
+  border-bottom:1px solid var(--rule);flex-shrink:0;
+}
+.chat-back{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.chat-back svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2;}
+.chat-avatar{width:40px;height:40px;border-radius:50%;font-size:22px;display:flex;align-items:center;justify-content:center;background:var(--cream);flex-shrink:0;}
+.chat-header-info{flex:1;}
+.chat-header-name{font-size:16px;font-weight:600;color:var(--ink);}
+.chat-header-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--moss);letter-spacing:.1em;}
+.chat-verified-mini{
+  width:28px;height:28px;background:var(--moss);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.chat-verified-mini svg{width:14px;height:14px;stroke:white;fill:none;stroke-width:2;}
+
+.chat-messages{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.msg-bubble{display:flex;flex-direction:column;max-width:75%;}
+.msg-bubble.them{align-self:flex-start;}
+.msg-bubble.me{align-self:flex-end;align-items:flex-end;}
+.bubble-text{
+  padding:12px 16px; border-radius:18px; font-size:14px;
+  line-height:1.65; letter-spacing:.03em;
+}
+.msg-bubble.them .bubble-text{background:white;color:var(--ink);border:1px solid var(--rule);border-radius:18px 18px 18px 4px;}
+.msg-bubble.me .bubble-text{background:var(--moss);color:white;border-radius:18px 18px 4px 18px;}
+.bubble-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--mist);margin-top:4px;}
+.msg-date-divider{
+  display:flex;align-items:center;gap:12px;margin:4px 0;
+}
+.msg-date-divider::before,.msg-date-divider::after{content:'';flex:1;height:1px;background:var(--rule);}
+.msg-date-divider span{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--mist);text-transform:uppercase;white-space:nowrap;}
+
+.chat-input-row{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px; background:white; border-top:1px solid var(--rule); flex-shrink:0;
+}
+.chat-input{
+  flex:1;padding:12px 16px;background:var(--cream);
+  border:none;border-radius:100px;
+  font-family:'Noto Serif JP',serif;font-size:14px;color:var(--ink);
+  outline:none;letter-spacing:.03em;
+}
+.chat-input::placeholder{color:var(--mist);}
+.chat-send{
+  width:44px;height:44px;background:var(--moss);border:none;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  transition:background .2s;
+}
+.chat-send:hover{background:var(--moss2);}
+.chat-send svg{width:18px;height:18px;stroke:white;fill:none;stroke-width:2;}
+
+/* ── ANIMATIONS ─────────────────── */
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.screen.active{animation:fadeUp .28s cubic-bezier(.16,1,.3,1);}
+.screen.slide-in{animation:slideIn .28s cubic-bezier(.16,1,.3,1);}
+
+/* ── SCREEN NAV INDICATOR ────────── */
+.screen-dots{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px; z-index:1000;
+}
+.screen-dot{
+  width:6px; height:6px; border-radius:50%;
+  background:rgba(255,255,255,.25); cursor:pointer; transition:all .2s;
+}
+.screen-dot.active{background:white; width:18px; border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="stage-label">縁側 ENGAWA — App Prototype · タップルで画面遷移</div>
+
+  <div class="phone" id="phone">
+
+    <!-- ══ SCREEN 1: SPLASH ══ -->
+    <div class="screen active" id="screen-splash">
+      <div class="splash-inner">
+        <div class="splash-badge">50歳以上限定 · 完全身元確認済み</div>
+        <div class="splash-title">縁側</div>
+        <div class="splash-roman">E N G A W A</div>
+        <div class="splash-verified">
+          <svg viewBox="0 0 16 16"><path d="M8 2L3 4.5v4c0 3.3 2 6 5 7 3-1 5-3.7 5-7v-4L8 2z"/><path d="M5.5 8l2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>全会員、公的書類で身元確認済み</span>
+        </div>
+        <div class="splash-tagline">
+          <em>身元確か、心も確か。</em><br>
+          生涯の遊び仲間を、ここで。
+        </div>
+        <button class="btn-splash" onclick="goTo('screen-home')">はじめる（無料登録）</button>
+        <button class="btn-splash-outline" onclick="goTo('screen-home')">ログイン</button>
+        <div class="splash-note">入会時に公的書類による本人確認があります</div>
+      </div>
+    </div>
+
+    <!-- ══ SCREEN 2: HOME ══ -->
+    <div class="screen" id="screen-home">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M2 13c1.5-2 4-3.5 8-3.5s6.5 1.5 8 3.5" stroke="#1a1612" stroke-width="1.5" stroke-linecap="round"/><path d="M5 16c1-1.3 2.8-2.2 5-2.2s4 .9 5 2.2" stroke="#1a1612" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="18.5" r="1.2" fill="#1a1612"/></svg>
+          <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="7" width="14" height="9" rx="1.5" stroke="#1a1612" stroke-width="1.5"/><rect x="5.5" y="7" width="9" height="6" rx="0.5" fill="#1a1612" opacity=".15"/><path d="M6 7V5a4 4 0 018 0v2" stroke="#1a1612" stroke-width="1.5"/></svg>
+        </div>
+      </div>
+      <div class="home-header">
+        <div class="home-header-top">
+          <div class="home-title">みつける</div>
+          <div class="home-bell">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <div class="home-bell-dot"></div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-chip active">すべて</div>
+          <div class="filter-chip">旅・お出かけ</div>
+          <div class="filter-chip">グルメ</div>
+          <div class="filter-chip">文化・芸術</div>
+          <div class="filter-chip">スポーツ</div>
+        </div>
+      </div>
+      <div class="scroll-content">
+        <div class="member-grid">
+          <!-- カード1 -->
+          <div class="member-card" onclick="goTo('screen-profile')">
+            <div class="card-photo">
+              <div class="card-avatar" style="background:linear-gradient(135deg,#e8e0d0,#d4c5a9)">🧑</div>
+              <div class="card-verified"><svg viewBox="0 0 10 10"><path d="M2 5l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>確認済</div>
+            </div>
+            <div class="card-body">
+              <div class="card-name">田中 誠一</div>
+              <div class="card-age">58歳 · 東京</div>
+              <div class="card-tags">
+                <span class="card-tag">旅行</span>
+                <span class="card-tag">料理</span>
+              </div>
+            </div>
+          </div>
+          <!-- カード2 -->
+          <div class="member-card" onclick="goTo('screen-profile')">
+            <div class="card-photo">
+              <div class="card-avatar" style="background:linear-gradient(135deg,#dde8e0,#c4d8cc)">👩</div>
+              <div class="card-verified"><svg viewBox="0 0 10 10"><path d="M2 5l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>確認済</div>
+            </div>
+            <div class="card-body">
+              <div class="card-name">佐藤 恵子</div>
+              <div class="card-age">55歳 · 神奈川</div>
+              <div class="card-tags">
+                <span class="card-tag">美術</span>
+                <span class="card-tag">映画</span>
+              </div>
+            </div>
+          </div>
+          <!-- カード3 -->
+          <div class="member-card" onclick="goTo('screen-profile')">
+            <div class="card-photo">
+              <div class="card-avatar" style="background:linear-gradient(135deg,#e8e4d0,#d8d0b8)">🧔</div>
+              <div class="card-verified"><svg viewBox="0 0 10 10"><path d="M2 5l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>確認済</div>
+            </div>
+            <div class="card-body">
+              <div class="card-name">山本 浩二</div>
+              <div class="card-age">62歳 · 大阪</div>
+              <div class="card-tags">
+                <span class="card-tag">登山</span>
+                <span class="card-tag">写真</span>
+              </div>
+            </div>
+          </div>
+          <!-- カード4 -->
+          <div class="member-card" onclick="goTo('screen-profile')">
+            <div class="card-photo">
+              <div class="card-avatar" style="background:linear-gradient(135deg,#e0dde8,#ccc8d8)">👩‍🦳</div>
+              <div class="card-verified"><svg viewBox="0 0 10 10"><path d="M2 5l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>確認済</div>
+            </div>
+            <div class="card-body">
+              <div class="card-name">鈴木 雅子</div>
+              <div class="card-age">60歳 · 京都</div>
+              <div class="card-tags">
+                <span class="card-tag">茶道</span>
+                <span class="card-tag">旅行</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-bar">
+        <div class="nav-item active" onclick="goTo('screen-home')">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <span>みつける</span>
+        </div>
+        <div class="nav-item" onclick="goTo('screen-messages')">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <span>メッセージ</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <span>気になる</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>マイページ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SCREEN 3: PROFILE ══ -->
+    <div class="screen" id="screen-profile">
+      <div class="status-bar" style="position:absolute;top:0;left:0;right:0;z-index:20;">
+        <span class="status-time" style="color:white;">9:41</span>
+        <div class="status-icons">
+          <svg viewBox="0 0 20 20" fill="none" style="width:16px;height:16px;"><path d="M2 13c1.5-2 4-3.5 8-3.5s6.5 1.5 8 3.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/><path d="M5 16c1-1.3 2.8-2.2 5-2.2s4 .9 5 2.2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="18.5" r="1.2" fill="white"/></svg>
+        </div>
+      </div>
+      <div class="scroll-content">
+        <div class="profile-header">
+          <div class="profile-bg" style="background:linear-gradient(160deg,#dde8e0,#a8c8b8)">🧑</div>
+          <div class="profile-header-overlay"></div>
+          <div class="profile-back" onclick="goTo('screen-home')">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="profile-header-info">
+            <div class="profile-name-row">
+              <div class="profile-name">田中 誠一</div>
+              <div class="profile-age">58歳</div>
+            </div>
+            <div class="profile-verified-badge">
+              <svg viewBox="0 0 14 14"><path d="M7 1L2 3.5v3.5c0 3 1.8 5.7 5 6.5 3.2-.8 5-3.5 5-6.5V3.5L7 1z"/><path d="M4.5 7l2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>本人確認済み会員</span>
+            </div>
+          </div>
+        </div>
+        <div class="profile-body">
+          <div class="profile-section">
+            <div class="profile-section-label">自己紹介</div>
+            <div class="profile-section-text">定年を機に、ずっとやりたかった料理と旅を本格的に楽しんでいます。一緒においしいものを食べに行ったり、国内外を旅できる友人を探しています。話しやすい方だと思うので、気軽にメッセージください。</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-label">好きなこと・趣味</div>
+            <div class="profile-tags-list">
+              <span class="profile-tag">🍳 料理</span>
+              <span class="profile-tag">✈️ 旅行</span>
+              <span class="profile-tag">📷 写真</span>
+              <span class="profile-tag">🎵 ジャズ</span>
+              <span class="profile-tag">🍷 ワイン</span>
+              <span class="profile-tag">🚶 ウォーキング</span>
+            </div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-label">基本情報</div>
+            <div class="profile-info-grid">
+              <div class="profile-info-item"><div class="profile-info-item-label">居住地</div><div class="profile-info-item-val">東京都 世田谷区</div></div>
+              <div class="profile-info-item"><div class="profile-info-item-label">出身地</div><div class="profile-info-item-val">静岡県</div></div>
+              <div class="profile-info-item"><div class="profile-info-item-label">求める関係</div><div class="profile-info-item-val">友人・旅仲間</div></div>
+              <div class="profile-info-item"><div class="profile-info-item-label">会員ステータス</div><div class="profile-info-item-val" style="color:var(--moss);">身元確認済み ✓</div></div>
+            </div>
+          </div>
+          <div style="height:20px;"></div>
+        </div>
+      </div>
+      <div class="profile-action-row">
+        <button class="btn-pass" onclick="goTo('screen-home')">スキップ</button>
+        <button class="btn-connect" onclick="goTo('screen-chat')">メッセージを送る</button>
+      </div>
+    </div>
+
+    <!-- ══ SCREEN 4: MESSAGES ══ -->
+    <div class="screen" id="screen-messages">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons"></div>
+      </div>
+      <div class="msg-header">
+        <div class="msg-header-top">
+          <div class="msg-title">メッセージ</div>
+          <div class="msg-edit">編集</div>
+        </div>
+      </div>
+      <div class="scroll-content">
+        <div class="thread-list">
+          <div class="thread-item" onclick="goTo('screen-chat')">
+            <div class="thread-avatar unread">🧑</div>
+            <div class="thread-info">
+              <div class="thread-name-row">
+                <span class="thread-name">田中 誠一</span>
+                <span class="thread-time">14:32</span>
+              </div>
+              <div class="thread-preview">京都に行く予定があるとのこと、ぜひ一緒に...</div>
+            </div>
+            <div class="thread-unread-dot"></div>
+          </div>
+          <div class="thread-item" onclick="goTo('screen-chat')">
+            <div class="thread-avatar">👩</div>
+            <div class="thread-info">
+              <div class="thread-name-row">
+                <span class="thread-name">佐藤 恵子</span>
+                <span class="thread-time">昨日</span>
+              </div>
+              <div class="thread-preview">ありがとうございます。来月はどうでしょう？</div>
+            </div>
+          </div>
+          <div class="thread-item" onclick="goTo('screen-chat')">
+            <div class="thread-avatar">👩‍🦳</div>
+            <div class="thread-info">
+              <div class="thread-name-row">
+                <span class="thread-name">鈴木 雅子</span>
+                <span class="thread-time">月曜</span>
+              </div>
+              <div class="thread-preview">茶道の体験会のご案内ができます。よろしけ...</div>
+            </div>
+          </div>
+          <div class="thread-item" onclick="goTo('screen-chat')">
+            <div class="thread-avatar">🧔</div>
+            <div class="thread-info">
+              <div class="thread-name-row">
+                <span class="thread-name">山本 浩二</span>
+                <span class="thread-time">先週</span>
+              </div>
+              <div class="thread-preview">北アルプスの写真、素晴らしかったです！</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-bar">
+        <div class="nav-item" onclick="goTo('screen-home')">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <span>みつける</span>
+        </div>
+        <div class="nav-item active" onclick="goTo('screen-messages')">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <span>メッセージ</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <span>気になる</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>マイページ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SCREEN 5: CHAT ══ -->
+    <div class="screen" id="screen-chat">
+      <div class="status-bar" style="flex-shrink:0;">
+        <span class="status-time">9:41</span>
+        <div class="status-icons"></div>
+      </div>
+      <div class="chat-header">
+        <div class="chat-back" onclick="goTo('screen-messages')">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="chat-avatar">🧑</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">田中 誠一</div>
+          <div class="chat-header-status">身元確認済み · 58歳 東京</div>
+        </div>
+        <div class="chat-verified-mini">
+          <svg viewBox="0 0 14 14"><path d="M7 1L2 3.5v3.5c0 3 1.8 5.7 5 6.5 3.2-.8 5-3.5 5-6.5V3.5L7 1z"/><path d="M4.5 7l2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="scroll-content">
+        <div class="chat-messages">
+          <div class="msg-date-divider"><span>今日</span></div>
+          <div class="msg-bubble them">
+            <div class="bubble-text">はじめまして。プロフィールを拝見して、旅行がお好きなんですね。私も京都が大好きで、よく行くんですよ。</div>
+            <div class="bubble-time">14:20</div>
+          </div>
+          <div class="msg-bubble me">
+            <div class="bubble-text">はじめまして！そうなんです、特に京都の秋は最高ですよね。いつ頃行かれるんですか？</div>
+            <div class="bubble-time">14:24</div>
+          </div>
+          <div class="msg-bubble them">
+            <div class="bubble-text">来月の紅葉シーズンに行こうと思っています。嵐山から哲学の道あたりを歩く予定で。よかったら一緒にいかがですか？</div>
+            <div class="bubble-time">14:28</div>
+          </div>
+          <div class="msg-bubble me">
+            <div class="bubble-text">ぜひ！嵐山の紅葉は本当に綺麗ですよね。日程はいつ頃をご予定ですか？</div>
+            <div class="bubble-time">14:32</div>
+          </div>
+          <div class="msg-bubble them">
+            <div class="bubble-text">11月中旬を考えています。もし都合がよければ、もう少し詳しく話しましょうか。</div>
+            <div class="bubble-time">14:35</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" type="text" placeholder="メッセージを入力...">
+        <button class="chat-send">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+
+</div><!-- /stage -->
+
+<script>
+let current = 'screen-splash';
+
+function goTo(id) {
+  const prev = document.getElementById(current);
+  const next = document.getElementById(id);
+  if (!next || id === current) return;
+  prev.classList.remove('active');
+  next.classList.add('active');
+  current = id;
+}
+
+// キーボードショートカット（デモ用）
+document.addEventListener('keydown', e => {
+  const order = ['screen-splash','screen-home','screen-profile','screen-messages','screen-chat'];
+  const idx = order.indexOf(current);
+  if (e.key === 'ArrowRight' && idx < order.length-1) goTo(order[idx+1]);
+  if (e.key === 'ArrowLeft'  && idx > 0)              goTo(order[idx-1]);
+});
+</script>
+</body>
+</html>
